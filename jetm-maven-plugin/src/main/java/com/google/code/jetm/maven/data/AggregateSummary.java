@@ -5,55 +5,39 @@ import java.util.Map;
 
 import etm.core.aggregation.Aggregate;
 
+/**
+ * A bean to store summary of aggregate data.
+ * 
+ * @author jrh3k5
+ * 
+ */
+
 public class AggregateSummary implements Aggregate, Comparable<AggregateSummary> {
-    private double min;
-    private double max;
+    private double min = Double.MAX_VALUE;
+    private double max = Double.MIN_VALUE;
     private double total;
     private long measurements;
     private String name;
 
+    /**
+     * Create a summary.
+     * 
+     * @param name
+     *            The name of the summary.
+     */
     public AggregateSummary(String name) {
         this.name = name;
     }
 
     /**
-     * {@inheritDoc}
+     * Add an aggregate to the summary.
+     * 
+     * @param aggregate
+     *            The {@link Aggregate} to be added to the summary.
      */
-    public double getMin() {
-        return min;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double getMax() {
-        return max;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double getTotal() {
-        return total;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public long getMeasurements() {
-        return measurements;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String getName() {
-        return name;
-    }
-
     public void add(Aggregate aggregate) {
-        this.min += aggregate.getMin();
-        this.max += aggregate.getMax();
+        this.min = Math.min(aggregate.getMin(), getMin());
+        this.max = Math.max(aggregate.getMax(), getMax());
         this.total += aggregate.getTotal();
         this.measurements += aggregate.getMeasurements();
     }
@@ -75,15 +59,50 @@ public class AggregateSummary implements Aggregate, Comparable<AggregateSummary>
     /**
      * {@inheritDoc}
      */
-    public boolean hasChilds() {
-        return false;
+    @SuppressWarnings("rawtypes")
+    public Map getChilds() {
+        return Collections.emptyMap();
     }
 
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("rawtypes")
-    public Map getChilds() {
-        return Collections.emptyMap();
+    public double getMax() {
+        return max;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getMeasurements() {
+        return measurements;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public double getMin() {
+        return min;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public double getTotal() {
+        return total;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean hasChilds() {
+        return false;
     }
 }

@@ -173,6 +173,15 @@ public class TimingReportMojo extends AbstractMavenReport {
         }
     }
 
+    /**
+     * Print a table containing information within a given set of aggregates.
+     * 
+     * @param sink
+     *            The {@link Sink} used to render out the table.
+     * @param aggregates
+     *            A {@link Collection} of {@link Aggregate} objects representing
+     *            the data to be written out.
+     */
     private void print(Sink sink, Collection<? extends Aggregate> aggregates) {
         sink.table();
         tableHeaderCell(sink, "Name");
@@ -195,18 +204,46 @@ public class TimingReportMojo extends AbstractMavenReport {
         sink.table_();
     }
 
+    /**
+     * Create a table header cell.
+     * 
+     * @param sink
+     *            The {@link Sink} used to render out the header.
+     * @param text
+     *            The text to be printed within the table header.
+     */
     private void tableHeaderCell(Sink sink, String text) {
         sink.tableHeaderCell();
         sink.text(text);
         sink.tableHeaderCell_();
     }
 
+    /**
+     * Create a table cell.
+     * 
+     * @param sink
+     *            The {@link Sink} used to render out the table cell.
+     * @param text
+     *            The text to be written inside the cell.
+     */
     private void tableCell(Sink sink, String text) {
         sink.tableCell();
         sink.text(text);
         sink.tableCell_();
     }
 
+    /**
+     * Get aggregates.
+     * 
+     * @return A {@link Map}. Its keys are the files that contain aggregate
+     *         data; the values are {@link List}s of {@link Aggregate} objects
+     *         representing the timings read within each file.
+     *         <p />
+     *         If a file contains no timing data, it will not be returned in
+     *         this map.
+     * @throws MavenReportException
+     *             If any errors occur while reading the file.
+     */
     private Map<File, List<Aggregate>> getAggregates() throws MavenReportException {
         final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
         for (File directory : timings) {
@@ -222,7 +259,10 @@ public class TimingReportMojo extends AbstractMavenReport {
                     throw new MavenReportException("File not found: " + file, e);
                 }
                 try {
-                    aggregateList.addAll(binder.unbind(reader));
+                    final Collection<Aggregate> unbound = binder.unbind(reader);
+                    if (unbound.isEmpty())
+                        continue;
+                    aggregateList.addAll(unbound);
                 } finally {
                     IOUtils.closeQuietly(reader);
                 }
@@ -232,6 +272,15 @@ public class TimingReportMojo extends AbstractMavenReport {
         return aggregates;
     }
 
+    /**
+     * Create aggregate summaries.
+     * 
+     * @param aggregates
+     *            A {@link Map} containing the aggregate data to be summarized.
+     * @return A {@link List} of {@link AggregateSummary} objects representing
+     *         the entirety of aggregate data, summarized by name.
+     * @see #getAggregates()
+     */
     private List<AggregateSummary> aggregate(Map<File, List<Aggregate>> aggregates) {
         if (aggregates.isEmpty())
             return Collections.emptyList();
@@ -252,6 +301,5 @@ public class TimingReportMojo extends AbstractMavenReport {
             summaryList.add(summary);
 
         return summaryList;
-
     }
 }
