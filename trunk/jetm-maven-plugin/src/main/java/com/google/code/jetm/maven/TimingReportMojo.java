@@ -139,16 +139,16 @@ public class TimingReportMojo extends AbstractMavenReport {
             sink.text(getName(locale));
             sink.sectionTitle1_();
 
+            if (summaries.isEmpty()) {
+                sink.text(" There are no JETM timings available for reporting.");
+                return;
+            }
+
             sink.sectionTitle2();
             sink.text("Summary");
             sink.sectionTitle2_();
 
             sink.text("This is a summary, by measurement name, of the measurements taken.");
-
-            if (summaries.isEmpty()) {
-                sink.text(" There are no JETM timings available for reporting.");
-                return;
-            }
 
             print(sink, summaries);
 
@@ -210,6 +210,9 @@ public class TimingReportMojo extends AbstractMavenReport {
     private Map<File, List<Aggregate>> getAggregates() throws MavenReportException {
         final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
         for (File directory : timings) {
+            if (!directory.exists())
+                continue;
+
             for (File file : FileUtils.listFiles(directory, xmlFileFilter, TrueFileFilter.TRUE)) {
                 final List<Aggregate> aggregateList = new LinkedList<Aggregate>();
                 FileReader reader;
