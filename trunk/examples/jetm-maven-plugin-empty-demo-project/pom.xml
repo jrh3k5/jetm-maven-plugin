@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.google.code.jetm</groupId>
+    <artifactId>jetm-maven-plugin-empty-demo-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>jetm-maven-plugin Empty Report Demo</name>
+    <description>A demonstratory project that shows what the jetm-maven-plugin report looks like when there's no timing data</description>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>com.google.code.jetm</groupId>
+                <artifactId>jetm-maven-plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <configuration>
+                    <timings>
+                        <timing>${project.build.directory}/jetm</timing>
+                    </timings>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>
