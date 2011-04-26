@@ -105,7 +105,7 @@ svn checkout http://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-
 Navigate within either project and run the following:
 
 {{{
-mvn test site
+mvn test site -Djetm.plugin.version=1.0
 }}}
 
 ...and you will see a "JETM Timing Report" in the site, detailing the collected timings.
