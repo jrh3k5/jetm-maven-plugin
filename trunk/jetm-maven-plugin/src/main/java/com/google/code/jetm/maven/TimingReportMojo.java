@@ -184,12 +184,15 @@ public class TimingReportMojo extends AbstractMavenReport {
      */
     private void print(Sink sink, Collection<? extends Aggregate> aggregates) {
         sink.table();
+        sink.tableRows(null, false);
+        sink.tableRow();
         tableHeaderCell(sink, "Name");
         tableHeaderCell(sink, "Average (sec)");
         tableHeaderCell(sink, "Measurements");
         tableHeaderCell(sink, "Minimum (sec)");
         tableHeaderCell(sink, "Maximum (sec)");
         tableHeaderCell(sink, "Total");
+        sink.tableRow_();
         for (Aggregate aggregate : aggregates) {
             sink.tableRow();
             tableCell(sink, aggregate.getName());
@@ -201,6 +204,7 @@ public class TimingReportMojo extends AbstractMavenReport {
             tableCell(sink, decimalFormatter.format(aggregate.getTotal() / 1000.0));
             sink.tableRow_();
         }
+        sink.tableRows_();
         sink.table_();
     }
 
