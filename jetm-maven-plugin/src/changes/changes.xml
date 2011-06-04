@@ -1,0 +1,14 @@
+<document xmlns="changes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="changes http://maven.apache.org/plugins/maven-changes-plugin/xsd/changes-1.0.0.xsd">
+    <properties>
+        <author>jrh3k5</author>
+    </properties>
+    <body>
+        <release version="1.1-SNAPSHOT" date="TBD">
+            <action dev="jrh3k5" type="fix" issue="1" system="GoogleCode">
+                JETM Maven Plugin does not work with Maven Site Plugin 2.1.x and above
+            </action>
+        </release>
+        <release date="2011-04-18" version="1.0" description="Initial GA Release" />
+    </body>
+</document>

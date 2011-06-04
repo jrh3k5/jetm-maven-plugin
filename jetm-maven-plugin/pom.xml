@@ -33,6 +33,10 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
+    <issueManagement>
+    	<system>GoogleCode</system>
+    	<url>http://code.google.com/p/jetm-maven-plugin/issues/</url>
+    </issueManagement>
     <developers>
         <developer>
             <id>jrh3k5</id>
@@ -51,7 +55,6 @@
             <testResource>
                 <directory>${project.basedir}/src/it/resources</directory>
                 <filtering>true</filtering>
-
             </testResource>
         </testResources>
         <plugins>
@@ -127,6 +130,18 @@
                         <id>verify-itest-results</id>
                         <goals>
                             <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-changes-plugin</artifactId>
+                <version>2.5</version>
+                <executions>
+                    <execution>
+                        <id>validate-changes</id>
+                        <goals>
+                            <goal>changes-validate</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -220,10 +235,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>org.jdom</groupId>
-        	<artifactId>jdom</artifactId>
-        	<version>1.1</version>
-        	<scope>test</scope>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <reporting>
@@ -293,6 +308,17 @@
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-changes-plugin</artifactId>
+                <version>2.5</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>changes-report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
         </plugins>
     </reporting>
