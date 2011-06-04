@@ -4,7 +4,9 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import etm.core.aggregation.Aggregate;
 
@@ -16,6 +18,59 @@ import etm.core.aggregation.Aggregate;
  */
 
 public class AggregateSummaryTest {
+    /**
+     * A {@link Rule} used to test for thrown exceptions.
+     */
+    @Rule
+    public ExpectedException expected = ExpectedException.none();
+
+    /**
+     * Given a {@code null} name, construction should fail.
+     */
+    @Test
+    public void testConstructNullName() {
+        expected.expect(IllegalArgumentException.class);
+        expected.expectMessage("Name cannot be null.");
+        new AggregateSummary(null);
+    }
+
+    /**
+     * Two summaries by the same name should be equal.
+     */
+    @Test
+    public void testEquals() {
+        final AggregateSummary summary = new AggregateSummary("test name");
+        final AggregateSummary other = new AggregateSummary(summary.getName());
+        assertThat(summary).isEqualTo(other);
+        assertThat(other).isEqualTo(summary);
+    }
+
+    /**
+     * An aggregate summary should not be equal to an object that is not an
+     * aggregate summary.
+     */
+    @Test
+    public void testEqualsNotAggregateSummary() {
+        assertThat(new AggregateSummary("a summary")).isNotEqualTo(new Object());
+    }
+
+    /**
+     * An aggregate summary should not be equal to {@code null}.
+     */
+    @Test
+    public void testEqualsNull() {
+        assertThat(new AggregateSummary("not null")).isNotEqualTo(null);
+    }
+
+    /**
+     * An aggregate summary should be equal to itself.
+     */
+    @Test
+    public void testEqualsSelf() {
+        final AggregateSummary summary = new AggregateSummary("self");
+        assertThat(summary).isEqualTo(summary);
+    }
+
     /**
      * Test the summary of two aggregates in a single {@link AggregateSummary}
      * object.
@@ -41,8 +96,7 @@ public class AggregateSummaryTest {
         assertThat(summary.getMin()).isEqualTo(aggregateOne.getMin());
         assertThat(summary.getMax()).isEqualTo(aggregateTwo.getMax());
         assertThat(summary.getTotal()).isEqualTo(aggregateOne.getTotal() + aggregateTwo.getTotal());
-        assertThat(summary.getMeasurements()).isEqualTo(
-                aggregateOne.getMeasurements() + aggregateTwo.getMeasurements());
+        assertThat(summary.getMeasurements()).isEqualTo(aggregateOne.getMeasurements() + aggregateTwo.getMeasurements());
     }
 
     /**
@@ -54,13 +108,21 @@ public class AggregateSummaryTest {
     public void testCompareTo() {
         final AggregateSummary summaryA = new AggregateSummary("summaryA");
         final AggregateSummary summaryACopy = new AggregateSummary(summaryA.getName());
-        
+
         assertThat(summaryA.compareTo(summaryACopy)).isZero();
         assertThat(summaryACopy.compareTo(summaryA)).isZero();
-        
+
         final AggregateSummary summaryB = new AggregateSummary("summaryB");
         assertThat(summaryA.compareTo(summaryB)).isLessThan(0);
         assertThat(summaryB.compareTo(summaryA)).isGreaterThan(0);
     }
 
+    /**
+     * A summary's hash code should be simply the hash code of its name.
+     */
+    @Test
+    public void testHashCode() {
+        final String name = "this will be a hash code";
+        assertThat(new AggregateSummary(name).hashCode()).isEqualTo(name.hashCode());
+    }
 }

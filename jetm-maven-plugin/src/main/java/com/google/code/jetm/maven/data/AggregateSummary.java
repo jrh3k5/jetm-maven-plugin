@@ -24,8 +24,13 @@ public class AggregateSummary implements Aggregate, Comparable<AggregateSummary>
      * 
      * @param name
      *            The name of the summary.
+     * @throws IllegalArgumentException
+     *             If the given name is {@code null}.
      */
     public AggregateSummary(String name) {
+        if (name == null)
+            throw new IllegalArgumentException("Name cannot be null.");
+
         this.name = name;
     }
 
@@ -47,6 +52,17 @@ public class AggregateSummary implements Aggregate, Comparable<AggregateSummary>
      */
     public int compareTo(AggregateSummary o) {
         return getName().compareTo(o.getName());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof AggregateSummary))
+            return false;
+
+        return getName().equals(((AggregateSummary) o).getName());
     }
 
     /**
@@ -104,5 +120,10 @@ public class AggregateSummary implements Aggregate, Comparable<AggregateSummary>
      */
     public boolean hasChilds() {
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getName().hashCode();
     }
 }
