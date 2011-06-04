@@ -5,23 +5,34 @@ import static org.fest.assertions.Assertions.assertThat;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.test.plugin.BuildTool;
 import org.codehaus.plexus.util.FileUtils;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.filter.ElementFilter;
+import org.jdom.input.SAXBuilder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -40,6 +51,12 @@ import etm.core.aggregation.Aggregate;
  */
 
 public class TimingReportMojoITest {
+    /**
+     * A {@link Rule} used to retrieve the test name.
+     */
+    @Rule
+    public TestName testName = new TestName();
+
     private static final Properties originalSystemProperties = System.getProperties();
     private final List<String> cleanTestSite = Arrays.asList("clean", "test", "site");
     private WebDriver driver;
@@ -108,10 +125,11 @@ public class TimingReportMojoITest {
     @Test
     public void testEmptyReport() throws Exception {
         final String projectName = "empty-project";
-        final File logFile = new File("target/failsafe-reports/testEmptyProject-maven.log");
+        final File logFile = getLogFile();
         final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
         assertThat(result.getExitCode()).isZero();
 
+        final WebDriver driver = getDriver();
         driver.get(getSiteIndexLocation(projectName));
         openJetmTimingReport(driver);
         assertThat(driver.findElement(By.id("contentBox")).getText()).contains("There are no JETM timings available for reporting.");
@@ -127,10 +145,11 @@ public class TimingReportMojoITest {
     @Test
     public void testDemoProject() throws Exception {
         final String projectName = "demo-project";
-        final File logFile = new File("target/failsafe-reports/testDemoProject-maven.log");
+        final File logFile = getLogFile();
         final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
         assertThat(result.getExitCode()).isZero();
 
+        final WebDriver driver = getDriver();
         driver.get(getSiteIndexLocation(projectName));
         openJetmTimingReport(driver);
 
@@ -145,6 +164,69 @@ public class TimingReportMojoITest {
     }
 
     /**
+     * Versions of maven-site-plugin past 2.0.x bring in a newer version of
+     * doxia which made for stricter requirements in the usage of the doxia API.
+     * This manifested in the {@code <th />} tags being incorrectly generated
+     * and placed outside of the {@code <table />} tag.
+     * 
+     * @throws Exception
+     *             If any errors occur during the test run.
+     */
+    @Test
+    public void testMavenSitePluginCompatibility() throws Exception {
+        final String projectName = "maven-site-plugin-version";
+        final File baseLogFile = getLogFile();
+
+        for (String sitePluginVersion : new String[] { "2.0", "2.1", "2.2" }) {
+            final File logFile = new File(baseLogFile.getParentFile(), sitePluginVersion + "-" + baseLogFile.getName());
+
+            final Properties mavenProps = new Properties();
+            mavenProps.setProperty("site.plugin.version", sitePluginVersion);
+
+            final InvocationResult result = build.executeMaven(getPom(projectName), mavenProps, cleanTestSite, logFile);
+            assertThat(result.getExitCode()).as("Execution for version " + sitePluginVersion + " failed.").isZero();
+
+            final InputStream resourceStream = getClass().getResourceAsStream("/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
+            assertThat(resourceStream).as("Could not find timing report for plugin version " + sitePluginVersion).isNotNull();
+            try {
+                final Document document = new SAXBuilder().build(new StringReader(IOUtils.toString(resourceStream, "utf-8")));
+                @SuppressWarnings("unchecked")
+                final Iterator<Element> headerElements = document.getDescendants(new ElementFilter("th"));
+                assertThat(headerElements.hasNext()).as("No header elements in version " + sitePluginVersion).isTrue();
+                while (headerElements.hasNext()) {
+                    final Element tableHeader = headerElements.next();
+                    final Element tableRow = tableHeader.getParentElement();
+                    assertThat(tableRow.getName()).isEqualTo("tr");
+
+                    /*
+                     * doxia used by 2.0 wraps the body of the table in a <tbody
+                     * /> tag
+                     */
+                    Element tableElement = null;
+                    if ("2.0".equals(sitePluginVersion)) {
+                        final Element tableBody = tableRow.getParentElement();
+                        assertThat(tableBody.getName()).isEqualTo("tbody");
+                        assertThat((tableElement = tableBody.getParentElement()).getName()).isEqualTo("table");
+                    } else
+                        assertThat((tableElement = tableRow.getParentElement()).getName()).isEqualTo("table");
+                    
+                    /*
+                     * To ensure some consistent styling, there should be zero
+                     * border
+                     */
+                    final Attribute borderAttribute = tableElement.getAttribute("border");
+                    if (borderAttribute != null)
+                        assertThat(borderAttribute.getValue()).isEqualTo("0");
+                }
+            } finally {
+                IOUtils.closeQuietly(resourceStream);
+            }
+
+            driver.close();
+        }
+    }
+
+    /**
      * Assert that the section by the given name exists in the report.
      * 
      * @param sectionName
@@ -154,7 +236,7 @@ public class TimingReportMojoITest {
         for (WebElement element : driver.findElements(By.tagName("h4")))
             if (sectionName.equals(element.getText()))
                 return;
-    
+
         throw new IllegalArgumentException("No section name found: " + sectionName + ". Page source: " + driver.getPageSource());
     }
 
@@ -179,6 +261,19 @@ public class TimingReportMojoITest {
             }
         }
         return aggregates;
+    }
+
+    /**
+     * Get a web driver to explore the generated Maven site.
+     * 
+     * @return A {@link WebDriver}. Each invocation will close whatever driver
+     *         was previously returned and return an entirely new driver.
+     */
+    private WebDriver getDriver() {
+        if (driver != null)
+            driver.close();
+
+        return driver = new HtmlUnitDriver();
     }
 
     /**
@@ -211,6 +306,19 @@ public class TimingReportMojoITest {
         } finally {
             reader.close();
         }
+    }
+
+    /**
+     * Get a log file to be used in the Maven build.
+     * 
+     * @return A {@link File} to be used to store Maven build output.
+     * @throws IOException
+     *             If any errors occur while generating the log file path.
+     */
+    private File getLogFile() throws IOException {
+        final File logFile = new File("target/failsafe-reports/" + testName.getMethodName() + "-maven.log");
+        FileUtils.forceMkdir(logFile.getParentFile());
+        return logFile;
     }
 
     /**
