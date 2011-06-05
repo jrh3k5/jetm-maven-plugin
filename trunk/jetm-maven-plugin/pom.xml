@@ -7,7 +7,7 @@
     </parent>
     <groupId>com.google.code.jetm</groupId>
     <artifactId>jetm-maven-plugin</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
     <name>JETM Maven Plugin</name>
     <description>A Maven plugin designed to provide additional functionality for JETM-aware projects</description>
@@ -20,9 +20,9 @@
         <jetm.plugin.version>${project.version}</jetm.plugin.version>
     </properties>
     <scm>
-        <connection>scm:svn:https://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0.1</connection>
-        <developerConnection>scm:svn:https://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0.1</developerConnection>
-        <url>https://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0.1</url>
+        <connection>scm:svn:https://jetm-maven-plugin.googlecode.com/svn/trunk/jetm-maven-plugin</connection>
+        <developerConnection>scm:svn:https://jetm-maven-plugin.googlecode.com/svn/trunk/jetm-maven-plugin</developerConnection>
+        <url>https://jetm-maven-plugin.googlecode.com/svn/trunk/jetm-maven-plugin</url>
     </scm>
     <licenses>
         <license>
