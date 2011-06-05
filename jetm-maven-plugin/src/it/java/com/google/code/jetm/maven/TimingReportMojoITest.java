@@ -3,9 +3,10 @@ package com.google.code.jetm.maven;
 import static org.fest.assertions.Assertions.assertThat;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -16,9 +17,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.test.plugin.BuildTool;
@@ -27,7 +25,7 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.filter.ElementFilter;
-import org.jdom.input.DOMBuilder;
+import org.jdom.input.SAXBuilder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -188,12 +186,10 @@ public class TimingReportMojoITest {
             final InvocationResult result = build.executeMaven(getPom(projectName), mavenProps, cleanTestSite, logFile);
             assertThat(result.getExitCode()).as("Execution for version " + sitePluginVersion + " failed.").isZero();
 
-            final File generatedHtml = new File("target/test-classes/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
-            assertThat(generatedHtml.exists()).as("Could not find timing report for plugin version " + sitePluginVersion).isTrue();
-            final FileInputStream reader = new FileInputStream(generatedHtml);
+            final InputStream resourceStream = getClass().getResourceAsStream("/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
+            assertThat(resourceStream).as("Could not find timing report for plugin version " + sitePluginVersion).isNotNull();
             try {
-                final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                final Document document = new DOMBuilder().build(builder.parse(reader));
+                final Document document = getDocument(IOUtils.toString(resourceStream));
                 @SuppressWarnings("unchecked")
                 final Iterator<Element> headerElements = document.getDescendants(new ElementFilter("th"));
                 assertThat(headerElements.hasNext()).as("No header elements in version " + sitePluginVersion).isTrue();
@@ -213,7 +209,7 @@ public class TimingReportMojoITest {
                         assertThat((tableElement = tableBody.getParentElement()).getName()).isEqualTo("table");
                     } else
                         assertThat((tableElement = tableRow.getParentElement()).getName()).isEqualTo("table");
-                    
+
                     /*
                      * To ensure some consistent styling, there should be zero
                      * border
@@ -223,7 +219,7 @@ public class TimingReportMojoITest {
                         assertThat(borderAttribute.getValue()).isEqualTo("0");
                 }
             } finally {
-                IOUtils.closeQuietly(reader);
+                IOUtils.closeQuietly(resourceStream);
             }
 
             driver.close();
@@ -265,6 +261,41 @@ public class TimingReportMojoITest {
             }
         }
         return aggregates;
+    }
+
+    /**
+     * Attempt to parse a given XML document into a JDOM document object. This
+     * method tries five times, because there seem to be intermittent issues
+     * with reading these generated HTML files - inability to read XSD files,
+     * unexpected end of file, and other fun things. In the event that all
+     * attempts have been exhausted, all of the collected exceptions will be
+     * printed and then another exception will be thrown to interrupt the test
+     * execution.
+     * <p />
+     * Admittedly, this is a hack, but it's a workaround to unstable sources of
+     * information (such as the XSD) that should not cause the test to fail.
+     * 
+     * @param xml
+     *            The XML document that is to be parsed.
+     * @return A {@link Document} representing the given XML document.
+     * @throws IllegalStateException
+     *             If all attempts to parse the document are exhausted.
+     */
+    private Document getDocument(String xml) {
+        final int maxAttempts = 5;
+        final Exception[] caught = new Exception[maxAttempts];
+        for (int i = 0; i < maxAttempts; i++) {
+            try {
+                return new SAXBuilder().build(new StringReader(xml));
+            } catch (Exception e) {
+                caught[i] = e;
+            }
+        }
+
+        for (int i = 0; i < caught.length && caught[i] != null; i++)
+            caught[i].printStackTrace();
+
+        throw new IllegalStateException("Too many errors were encountered while trying to parse the document.");
     }
 
     /**
