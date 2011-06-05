@@ -4,9 +4,12 @@
         <author>jrh3k5</author>
     </properties>
     <body>
-        <release version="1.1-SNAPSHOT" date="TBD">
+        <release version="1.0.1" date="2011-06-05">
+            <action dev="jrh3k5" type="fix" issue="2" system="GoogleCode">
+                HtmlUnit JAR is included into assembly.
+            </action>
             <action dev="jrh3k5" type="fix" issue="1" system="GoogleCode">
-                JETM Maven Plugin does not work with Maven Site Plugin 2.1.x and above
+                JETM Maven Plugin does not work with Maven Site Plugin 2.1.x and above.
             </action>
         </release>
         <release date="2011-04-18" version="1.0" description="Initial GA Release" />

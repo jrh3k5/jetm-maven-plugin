@@ -33,6 +33,7 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
+    <url>http://code.google.com/p/jetm-maven-plugin/</url>
     <issueManagement>
     	<system>GoogleCode</system>
     	<url>http://code.google.com/p/jetm-maven-plugin/issues/</url>
@@ -227,6 +228,7 @@
             <groupId>org.seleniumhq.webdriver</groupId>
             <artifactId>webdriver-htmlunit</artifactId>
             <version>0.9.7376</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
