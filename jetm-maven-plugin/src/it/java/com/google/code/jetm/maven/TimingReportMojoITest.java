@@ -5,8 +5,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -186,10 +184,11 @@ public class TimingReportMojoITest {
             final InvocationResult result = build.executeMaven(getPom(projectName), mavenProps, cleanTestSite, logFile);
             assertThat(result.getExitCode()).as("Execution for version " + sitePluginVersion + " failed.").isZero();
 
-            final InputStream resourceStream = getClass().getResourceAsStream("/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
-            assertThat(resourceStream).as("Could not find timing report for plugin version " + sitePluginVersion).isNotNull();
+            final File generatedHtml = new File("target/test-classes/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
+            assertThat(generatedHtml.exists()).as("Could not find timing report for plugin version " + sitePluginVersion).isTrue();
+            final FileReader reader = new FileReader(generatedHtml);
             try {
-                final Document document = new SAXBuilder().build(new StringReader(IOUtils.toString(resourceStream)));
+                final Document document = new SAXBuilder().build(reader);
                 @SuppressWarnings("unchecked")
                 final Iterator<Element> headerElements = document.getDescendants(new ElementFilter("th"));
                 assertThat(headerElements.hasNext()).as("No header elements in version " + sitePluginVersion).isTrue();
@@ -219,7 +218,7 @@ public class TimingReportMojoITest {
                         assertThat(borderAttribute.getValue()).isEqualTo("0");
                 }
             } finally {
-                IOUtils.closeQuietly(resourceStream);
+                IOUtils.closeQuietly(reader);
             }
 
             driver.close();
