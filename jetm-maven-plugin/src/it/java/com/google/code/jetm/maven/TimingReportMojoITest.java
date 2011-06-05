@@ -189,7 +189,7 @@ public class TimingReportMojoITest {
             final InputStream resourceStream = getClass().getResourceAsStream("/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
             assertThat(resourceStream).as("Could not find timing report for plugin version " + sitePluginVersion).isNotNull();
             try {
-                final Document document = new SAXBuilder().build(new StringReader(IOUtils.toString(resourceStream, "utf-8")));
+                final Document document = new SAXBuilder().build(new StringReader(IOUtils.toString(resourceStream)));
                 @SuppressWarnings("unchecked")
                 final Iterator<Element> headerElements = document.getDescendants(new ElementFilter("th"));
                 assertThat(headerElements.hasNext()).as("No header elements in version " + sitePluginVersion).isTrue();
