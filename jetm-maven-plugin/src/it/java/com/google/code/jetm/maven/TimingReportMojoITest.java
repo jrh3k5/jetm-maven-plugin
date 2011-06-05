@@ -3,6 +3,7 @@ package com.google.code.jetm.maven;
 import static org.fest.assertions.Assertions.assertThat;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
@@ -15,6 +16,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.test.plugin.BuildTool;
@@ -23,7 +27,7 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.filter.ElementFilter;
-import org.jdom.input.SAXBuilder;
+import org.jdom.input.DOMBuilder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -186,9 +190,10 @@ public class TimingReportMojoITest {
 
             final File generatedHtml = new File("target/test-classes/example-projects/maven-site-plugin-version/target/site/jetm-timing-report.html");
             assertThat(generatedHtml.exists()).as("Could not find timing report for plugin version " + sitePluginVersion).isTrue();
-            final FileReader reader = new FileReader(generatedHtml);
+            final FileInputStream reader = new FileInputStream(generatedHtml);
             try {
-                final Document document = new SAXBuilder().build(reader);
+                final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                final Document document = new DOMBuilder().build(builder.parse(reader));
                 @SuppressWarnings("unchecked")
                 final Iterator<Element> headerElements = document.getDescendants(new ElementFilter("th"));
                 assertThat(headerElements.hasNext()).as("No header elements in version " + sitePluginVersion).isTrue();
