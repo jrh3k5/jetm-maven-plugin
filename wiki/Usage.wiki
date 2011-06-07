@@ -74,7 +74,7 @@ Within your project POM, place the following:
             <plugin>
                 <groupId>com.google.code.jetm</groupId>
                 <artifactId>jetm-maven-plugin</artifactId>
-                <version>1.0</version>
+                <version>1.0.1</version>
                 <configuration>
                     <timings>
                         <timing>${project.build.directory}/jetm</timing>
@@ -102,10 +102,10 @@ The plugin has some example projects that you can use to see the report in actio
 svn checkout http://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0/src/it/resources/example-projects/
 }}}
 
-Navigate within either project and run the following:
+Navigate within any of the projects and run the following:
 
 {{{
-mvn test site -Djetm.plugin.version=1.0
+mvn test site -Djetm.plugin.version=1.0.1
 }}}
 
 ...and you will see a "JETM Timing Report" in the site, detailing the collected timings.
