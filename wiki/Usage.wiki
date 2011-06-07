@@ -99,7 +99,7 @@ mvn test site
 The plugin has some example projects that you can use to see the report in action. Run the following from your command line to check out the example projects:
 
 {{{
-svn checkout http://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0/src/it/resources/example-projects/
+svn checkout http://jetm-maven-plugin.googlecode.com/svn/tags/jetm-maven-plugin-1.0.1/src/it/resources/example-projects/
 }}}
 
 Navigate within any of the projects and run the following:
