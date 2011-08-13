@@ -4,7 +4,7 @@
         <author>jrh3k5</author>
     </properties>
     <body>
-        <release version="1.0.2-SNAPSHOT" date="TBD">
+        <release version="1.0.2" date="2011-08-13">
             <action dev="jrh3k5" type="add" issue="7" system="GoogleCode">
                 Order the names of the points in the report.
             </action>
