@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.google.code.jetm</groupId>
+    <artifactId>millisecond-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>jetm-maven-plugin Demo Project</name>
+    <description>A project to demonstrate the jetm-maven-plugin rendering of results in milliseconds</description>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.7.1</version>
+                <configuration>
+                    <includes>
+                        <include>**/JetmDemo.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*$*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>com.google.code.jetm</groupId>
+                <artifactId>jetm-maven-plugin</artifactId>
+                <version>${jetm.plugin.version}</version>
+                <configuration>
+                    <timeUnit>MILLIS</timeUnit>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.code.jetm</groupId>
+            <artifactId>jetm-reporting-utilities</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+        </dependency>
+        <dependency>
+            <groupId>fm.void.jetm</groupId>
+            <artifactId>jetm</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.0</version>
+        </dependency>
+    </dependencies>
+</project>
