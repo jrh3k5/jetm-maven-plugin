@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -129,10 +130,8 @@ public class TimingReportMojoITest {
         final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
         assertThat(result.getExitCode()).isZero();
 
-        final WebDriver driver = getDriver();
-        driver.get(getSiteIndexLocation(projectName));
-        openJetmTimingReport(driver);
-        assertThat(driver.findElement(By.id("contentBox")).getText()).contains("There are no JETM timings available for reporting.");
+        final File siteIndex = new File(URI.create(getSiteIndexLocation(projectName)));
+        assertThat(new File(siteIndex.getParentFile(), "jetm-timing-report.html")).doesNotExist();
     }
 
     /**
