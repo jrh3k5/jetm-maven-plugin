@@ -28,6 +28,7 @@ import org.apache.maven.reporting.MavenReportException;
 import org.codehaus.plexus.util.StringUtils;
 
 import com.google.code.jetm.maven.data.AggregateSummary;
+import com.google.code.jetm.maven.util.AggregateComparator;
 import com.google.code.jetm.maven.util.XmlIOFileFilter;
 import com.google.code.jetm.reporting.AggregateBinder;
 import com.google.code.jetm.reporting.xml.XmlAggregateBinder;
@@ -320,7 +321,11 @@ public class TimingReportMojo extends AbstractMavenReport {
         tableHeaderCell(sink, "Maximum (sec)");
         tableHeaderCell(sink, "Total");
         sink.tableRow_();
-        for (Aggregate aggregate : aggregates) {
+
+        final List<? extends Aggregate> sortedAggregates = new ArrayList<Aggregate>(aggregates);
+        Collections.sort(sortedAggregates, new AggregateComparator());
+
+        for (Aggregate aggregate : sortedAggregates) {
             sink.tableRow();
             tableCell(sink, aggregate.getName());
             tableCell(sink, decimalFormatter.format((aggregate.getTotal() / aggregate
