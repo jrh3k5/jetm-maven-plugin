@@ -42,10 +42,9 @@ import etm.core.aggregation.Aggregate;
 
 public class TimingReportMojo extends AbstractMavenReport {
     /**
-     * The directories containing the timing report XML files.
+     * The directories containing the timing report XML files. If not set, then a default of "${project.build.directory}/jetm" will be used instead.
      * 
      * @parameter
-     * @required
      */
     private File[] timings;
 
@@ -71,6 +70,15 @@ public class TimingReportMojo extends AbstractMavenReport {
      * @readonly
      */
     private Renderer siteRenderer;
+
+    /**
+     * The build directory for the Maven project.
+     * 
+     * @parameter default-value="${project.build.directory}"
+     * @required
+     * @readonly
+     */
+    private File buildDirectory;
 
     /**
      * {@inheritDoc}
@@ -250,7 +258,7 @@ public class TimingReportMojo extends AbstractMavenReport {
      */
     private Map<File, List<Aggregate>> getAggregates() throws MavenReportException {
         final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
-        for (File directory : timings) {
+        for (File directory : getTimings()) {
             if (!directory.exists())
                 continue;
 
@@ -274,6 +282,15 @@ public class TimingReportMojo extends AbstractMavenReport {
             }
         }
         return aggregates;
+    }
+
+    /**
+     * Get the timings directories.
+     * 
+     * @return An array of {@link File} objects representing the configured timing directories; if none are configured, then "${project.build.directory}/jetm" will be used as a default.
+     */
+    private File[] getTimings() {
+        return timings == null ? new File[] { new File(buildDirectory, "jetm") } : timings;
     }
 
     /**

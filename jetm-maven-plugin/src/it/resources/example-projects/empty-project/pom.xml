@@ -24,11 +24,6 @@
                 <groupId>com.google.code.jetm</groupId>
                 <artifactId>jetm-maven-plugin</artifactId>
                 <version>${jetm.plugin.version}</version>
-                <configuration>
-                    <timings>
-                        <timing>target/jetm</timing>
-                    </timings>
-                </configuration>
             </plugin>
         </plugins>
     </reporting>
