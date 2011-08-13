@@ -28,6 +28,7 @@ import org.apache.maven.reporting.MavenReportException;
 import org.codehaus.plexus.util.StringUtils;
 
 import com.google.code.jetm.maven.data.AggregateSummary;
+import com.google.code.jetm.maven.data.TimeUnit;
 import com.google.code.jetm.maven.util.AggregateComparator;
 import com.google.code.jetm.maven.util.XmlIOFileFilter;
 import com.google.code.jetm.reporting.AggregateBinder;
@@ -59,6 +60,18 @@ public class TimingReportMojo extends AbstractMavenReport {
      * @required
      */
     private String inputEncoding;
+
+    /**
+     * The unit of time in which the report is to express its recorded timings. Supported values are:
+     * <ul>
+     * <li>SECS: the report will display times in seconds</li>
+     * <li>MILLIS: the report will display times in milliseconds</li>
+     * </ul>
+     * 
+     * @parameter default-value="SECS"
+     * @required
+     */
+    private String timeUnit;
 
     /**
      * Directory where reports will go.
@@ -276,6 +289,15 @@ public class TimingReportMojo extends AbstractMavenReport {
     }
 
     /**
+     * Get the time unit to be used when rendering the report.
+     * 
+     * @return A {@link TimeUnit} enum corresponding to the configured time unit.
+     */
+    private TimeUnit getTimeUnit() {
+        return TimeUnit.fromMojoAbbreviation(timeUnit);
+    }
+
+    /**
      * Get the timings directories.
      * 
      * @return An array of {@link File} objects representing the configured timing directories; if none are configured, then "${project.build.directory}/jetm" will be used as a default.
@@ -311,15 +333,17 @@ public class TimingReportMojo extends AbstractMavenReport {
      *            the data to be written out.
      */
     private void print(Sink sink, Collection<? extends Aggregate> aggregates) {
+        final TimeUnit timeUnit = getTimeUnit();
+
         sink.table();
         sink.tableRows(null, false);
         sink.tableRow();
         tableHeaderCell(sink, "Name");
-        tableHeaderCell(sink, "Average (sec)");
+        tableHeaderCell(sink, "Average (" + timeUnit.getDisplayName() + ")");
         tableHeaderCell(sink, "Measurements");
-        tableHeaderCell(sink, "Minimum (sec)");
-        tableHeaderCell(sink, "Maximum (sec)");
-        tableHeaderCell(sink, "Total");
+        tableHeaderCell(sink, "Minimum (" + timeUnit.getDisplayName() + ")");
+        tableHeaderCell(sink, "Maximum (" + timeUnit.getDisplayName() + ")");
+        tableHeaderCell(sink, "Total (" + timeUnit.getDisplayName() + ")");
         sink.tableRow_();
 
         final List<? extends Aggregate> sortedAggregates = new ArrayList<Aggregate>(aggregates);
@@ -328,12 +352,11 @@ public class TimingReportMojo extends AbstractMavenReport {
         for (Aggregate aggregate : sortedAggregates) {
             sink.tableRow();
             tableCell(sink, aggregate.getName());
-            tableCell(sink, decimalFormatter.format((aggregate.getTotal() / aggregate
-                    .getMeasurements()) / 1000.0));
+            tableCell(sink, decimalFormatter.format(timeUnit.fromMilliseconds(aggregate.getTotal() / aggregate.getMeasurements())));
             tableCell(sink, Long.toString(aggregate.getMeasurements()));
-            tableCell(sink, decimalFormatter.format(aggregate.getMin() / 1000.0));
-            tableCell(sink, decimalFormatter.format(aggregate.getMax() / 1000.0));
-            tableCell(sink, decimalFormatter.format(aggregate.getTotal() / 1000.0));
+            tableCell(sink, decimalFormatter.format(timeUnit.fromMilliseconds(aggregate.getMin())));
+            tableCell(sink, decimalFormatter.format(timeUnit.fromMilliseconds(aggregate.getMax())));
+            tableCell(sink, decimalFormatter.format(timeUnit.fromMilliseconds(aggregate.getTotal())));
             sink.tableRow_();
         }
         sink.tableRows_();

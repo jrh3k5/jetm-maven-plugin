@@ -39,6 +39,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import com.google.code.jetm.maven.data.TimeUnit;
 import com.google.code.jetm.maven.internal.SimpleAggregate;
 import com.google.code.jetm.reporting.xml.XmlAggregateBinder;
 
@@ -118,6 +119,34 @@ public class TimingReportMojoITest {
     }
 
     /**
+     * Test the creation of a report for a demo project.
+     * 
+     * @throws Exception
+     *             If any errors occur during the test run.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testDemoProject() throws Exception {
+        final String projectName = "demo-project";
+        final File logFile = getLogFile();
+        final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
+        assertThat(result.getExitCode()).isZero();
+    
+        final WebDriver driver = getDriver();
+        driver.get(getSiteIndexLocation(projectName));
+        openJetmTimingReport(driver);
+    
+        final Collection<Aggregate> reportData = getAggregateData();
+        for (File reportFile : (List<File>) FileUtils.getFiles(FileUtils.toFile(getClass().getResource("/example-projects/" + projectName + "/target/jetm")), "**/*.xml", null, true)) {
+            final Collection<Aggregate> aggregates = getAggregates(reportFile, TimeUnit.SECONDS);
+            // Find the entry for the file
+            assertHasSection(reportFile.getName());
+            // Make sure the data's in the report
+            assertThat(reportData).contains(aggregates.toArray());
+        }
+    }
+
+    /**
      * Test the creation of an empty report.
      * 
      * @throws Exception
@@ -132,34 +161,6 @@ public class TimingReportMojoITest {
 
         final File siteIndex = new File(URI.create(getSiteIndexLocation(projectName)));
         assertThat(new File(siteIndex.getParentFile(), "jetm-timing-report.html")).doesNotExist();
-    }
-
-    /**
-     * Test the creation of a report for a demo project.
-     * 
-     * @throws Exception
-     *             If any errors occur during the test run.
-     */
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testDemoProject() throws Exception {
-        final String projectName = "demo-project";
-        final File logFile = getLogFile();
-        final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
-        assertThat(result.getExitCode()).isZero();
-
-        final WebDriver driver = getDriver();
-        driver.get(getSiteIndexLocation(projectName));
-        openJetmTimingReport(driver);
-
-        final Collection<Aggregate> reportData = getAggregateData();
-        for (File reportFile : (List<File>) FileUtils.getFiles(FileUtils.toFile(getClass().getResource("/example-projects/" + projectName + "/target/jetm")), "**/*.xml", null, true)) {
-            final Collection<Aggregate> aggregates = getAggregates(reportFile);
-            // Find the entry for the file
-            assertHasSection(reportFile.getName());
-            // Make sure the data's in the report
-            assertThat(reportData).contains(aggregates.toArray());
-        }
     }
 
     /**
@@ -222,6 +223,34 @@ public class TimingReportMojoITest {
             }
 
             driver.close();
+        }
+    }
+
+    /**
+     * Test the rendering of a report in milliseconds.
+     * 
+     * @throws Exception
+     *             If any errors occur during the test run.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRenderInMilliseconds() throws Exception {
+        final String projectName = "millisecond-project";
+        final File logFile = getLogFile();
+        final InvocationResult result = build.executeMaven(getPom(projectName), null, cleanTestSite, logFile);
+        assertThat(result.getExitCode()).isZero();
+
+        final WebDriver driver = getDriver();
+        driver.get(getSiteIndexLocation(projectName));
+        openJetmTimingReport(driver);
+
+        final Collection<Aggregate> reportData = getAggregateData();
+        for (File reportFile : (List<File>) FileUtils.getFiles(FileUtils.toFile(getClass().getResource("/example-projects/" + projectName + "/target/jetm")), "**/*.xml", null, true)) {
+            final Collection<Aggregate> aggregates = getAggregates(reportFile, TimeUnit.MILLISECONDS);
+            // Find the entry for the file
+            assertHasSection(reportFile.getName());
+            // Make sure the data's in the report
+            assertThat(reportData).contains(aggregates.toArray());
         }
     }
 
@@ -321,7 +350,7 @@ public class TimingReportMojoITest {
      * @throws IOException
      *             If any errors occur during the collection of the data.
      */
-    private Collection<Aggregate> getAggregates(File aggregateData) throws IOException {
+    private Collection<Aggregate> getAggregates(File aggregateData, TimeUnit timeUnit) throws IOException {
         final FileReader reader = new FileReader(aggregateData);
         try {
             final Collection<Aggregate> aggregates = new LinkedList<Aggregate>();
@@ -330,10 +359,10 @@ public class TimingReportMojoITest {
                  * Divide each by a thousand to convert from milliseconds to
                  * seconds
                  */
-                final double average = round(original.getAverage() * 0.001);
-                final double min = round(original.getMin() * 0.001);
-                final double max = round(original.getMax() * 0.001);
-                final double total = round(original.getTotal() * 0.001);
+                final double average = round(original.getAverage() / timeUnit.getDivisionValue());
+                final double min = round(original.getMin() / timeUnit.getDivisionValue());
+                final double max = round(original.getMax() / timeUnit.getDivisionValue());
+                final double total = round(original.getTotal() / timeUnit.getDivisionValue());
                 aggregates.add(new SimpleAggregate(original.getName(), average, min, max, original.getMeasurements(), total));
             }
             return aggregates;
