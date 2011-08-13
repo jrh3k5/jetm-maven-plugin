@@ -1,0 +1,34 @@
+<document xmlns="changes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="changes http://maven.apache.org/plugins/maven-changes-plugin/xsd/changes-1.0.0.xsd">
+    <properties>
+        <author>jrh3k5</author>
+    </properties>
+    <body>
+        <release version="1.0.2" date="2011-08-13">
+            <action dev="jrh3k5" type="add" issue="7" system="GoogleCode">
+                Order the names of the points in the report.
+            </action>
+            <action dev="jrh3k5" type="add" issue="6" system="GoogleCode">
+                Allow developers to specify the unit of time.
+            </action>
+            <action dev="jrh3k5" type="add" issue="5" system="GoogleCode">
+                Default in output directory.
+            </action>
+            <action dev="jrh3k5" type="add" issue="4" system="GoogleCode">
+                Allow consumers to specify the encoding used to read in the XML files.
+            </action>
+            <action dev="jrh3k5" type="add" issue="3" system="GoogleCode">
+                Don't generate the report if there are no XML files to be read.
+            </action>
+        </release>
+        <release version="1.0.1" date="2011-06-05">
+            <action dev="jrh3k5" type="fix" issue="2" system="GoogleCode">
+                HtmlUnit JAR is included into assembly.
+            </action>
+            <action dev="jrh3k5" type="fix" issue="1" system="GoogleCode">
+                JETM Maven Plugin does not work with Maven Site Plugin 2.1.x and above.
+            </action>
+        </release>
+        <release date="2011-04-18" version="1.0" description="Initial GA Release" />
+    </body>
+</document>
