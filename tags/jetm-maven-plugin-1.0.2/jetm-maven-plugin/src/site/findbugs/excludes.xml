@@ -1,0 +1,32 @@
+<FindBugsFilter>
+    <Match>
+        <!-- The timings field is written to by the Maven plugin architecture -->
+        <Class name="com.google.code.jetm.maven.TimingReportMojo" />
+        <Field name="timings" />
+        <Bug pattern="NP_UNWRITTEN_FIELD" />
+    </Match>
+    <Match>
+        <!-- The timings field is written to by the Maven plugin architecture -->
+        <Class name="com.google.code.jetm.maven.TimingReportMojo" />
+        <Field name="timings" />
+        <Bug pattern="UWF_UNWRITTEN_FIELD" />
+    </Match>
+    <Match>
+        <!-- The outputDirectory field is written to by the Maven plugin architecture -->
+        <Class name="com.google.code.jetm.maven.TimingReportMojo" />
+        <Field name="outputDirectory" />
+        <Bug pattern="UWF_UNWRITTEN_FIELD" />
+    </Match>
+    <Match>
+        <!-- The project field is written to by the Maven plugin architecture -->
+        <Class name="com.google.code.jetm.maven.TimingReportMojo" />
+        <Field name="project" />
+        <Bug pattern="UWF_UNWRITTEN_FIELD" />
+    </Match>
+    <Match>
+        <!-- The siteRenderer field is written to by the Maven plugin architecture -->
+        <Class name="com.google.code.jetm.maven.TimingReportMojo" />
+        <Field name="siteRenderer" />
+        <Bug pattern="UWF_UNWRITTEN_FIELD" />
+    </Match>
+</FindBugsFilter>
