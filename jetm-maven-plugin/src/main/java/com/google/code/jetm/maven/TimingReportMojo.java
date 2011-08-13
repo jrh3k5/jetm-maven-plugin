@@ -1,8 +1,10 @@
 package com.google.code.jetm.maven;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,7 @@ import org.apache.maven.doxia.siterenderer.Renderer;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.reporting.AbstractMavenReport;
 import org.apache.maven.reporting.MavenReportException;
+import org.codehaus.plexus.util.StringUtils;
 
 import com.google.code.jetm.maven.data.AggregateSummary;
 import com.google.code.jetm.maven.util.XmlIOFileFilter;
@@ -47,6 +50,14 @@ public class TimingReportMojo extends AbstractMavenReport {
      * @parameter
      */
     private File[] timings;
+
+    /**
+     * The encoding by which the XML files will be read. If not specified, this defaults to platform encoding.
+     * 
+     * @parameter default-value="${project.build.sourceEncoding}"
+     * @required
+     */
+    private String inputEncoding;
 
     /**
      * Directory where reports will go.
@@ -235,9 +246,9 @@ public class TimingReportMojo extends AbstractMavenReport {
         final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
         for (File file : getTimingFiles()) {
             final List<Aggregate> aggregateList = new LinkedList<Aggregate>();
-            FileReader reader;
+            InputStreamReader reader;
             try {
-                reader = new FileReader(file);
+                reader = new InputStreamReader(new FileInputStream(file), getInputCharset());
             } catch (FileNotFoundException e) {
                 throw new MavenReportException("File not found: " + file, e);
             }
@@ -252,6 +263,15 @@ public class TimingReportMojo extends AbstractMavenReport {
             aggregates.put(file, aggregateList);
         }
         return aggregates;
+    }
+
+    /**
+     * Get the file encoding to be used to read the XML files.
+     * 
+     * @return A {@link Charset} representing the configured character set.
+     */
+    private Charset getInputCharset() {
+        return StringUtils.isBlank(inputEncoding) ? Charset.defaultCharset() : Charset.forName(inputEncoding);
     }
 
     /**
