@@ -80,6 +80,17 @@ public class TimingReportMojo extends AbstractMavenReport {
      */
     private File buildDirectory;
 
+    private final AggregateBinder binder = new XmlAggregateBinder();
+
+    private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
+
+    private final XmlIOFileFilter xmlFileFilter = new XmlIOFileFilter();
+
+    @Override
+    public boolean canGenerateReport() {
+        return !getTimingFiles().isEmpty();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -104,8 +115,56 @@ public class TimingReportMojo extends AbstractMavenReport {
     /**
      * {@inheritDoc}
      */
-    protected Renderer getSiteRenderer() {
-        return siteRenderer;
+    protected void executeReport(Locale locale) throws MavenReportException {
+        final Map<File, List<Aggregate>> aggregates = getAggregates();
+        final List<AggregateSummary> summaries = aggregate(aggregates);
+        Collections.sort(summaries);
+    
+        final Sink sink = getSink();
+        try {
+            sink.head();
+            sink.title();
+            sink.text(getName(locale));
+            sink.title_();
+            sink.head_();
+    
+            sink.body();
+            sink.sectionTitle1();
+            sink.text(getName(locale));
+            sink.sectionTitle1_();
+    
+            if (summaries.isEmpty()) {
+                sink.text(" There are no JETM timings available for reporting.");
+                return;
+            }
+    
+            sink.sectionTitle2();
+            sink.text("Summary");
+            sink.sectionTitle2_();
+    
+            sink.text("This is a summary, by measurement name, of the measurements taken.");
+    
+            print(sink, summaries);
+    
+            sink.sectionTitle2();
+            sink.text("File Breakdown");
+            sink.sectionTitle2_();
+    
+            sink.text("This is a list of, per XML file, the measurements taken.");
+    
+            for (Entry<File, List<Aggregate>> entry : aggregates.entrySet()) {
+                sink.sectionTitle3();
+                sink.text(entry.getKey().getName());
+                sink.sectionTitle3_();
+    
+                print(sink, entry.getValue());
+            }
+        } finally {
+            sink.body_();
+    
+            sink.flush();
+            sink.close();
+        }
     }
 
     /**
@@ -122,63 +181,103 @@ public class TimingReportMojo extends AbstractMavenReport {
         return project;
     }
 
-    private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
-    private final AggregateBinder binder = new XmlAggregateBinder();
-    private final XmlIOFileFilter xmlFileFilter = new XmlIOFileFilter();
-
     /**
      * {@inheritDoc}
      */
-    protected void executeReport(Locale locale) throws MavenReportException {
-        final Map<File, List<Aggregate>> aggregates = getAggregates();
-        final List<AggregateSummary> summaries = aggregate(aggregates);
-        Collections.sort(summaries);
+    protected Renderer getSiteRenderer() {
+        return siteRenderer;
+    }
 
-        final Sink sink = getSink();
-        try {
-            sink.head();
-            sink.title();
-            sink.text(getName(locale));
-            sink.title_();
-            sink.head_();
-
-            sink.body();
-            sink.sectionTitle1();
-            sink.text(getName(locale));
-            sink.sectionTitle1_();
-
-            if (summaries.isEmpty()) {
-                sink.text(" There are no JETM timings available for reporting.");
-                return;
+    /**
+     * Create aggregate summaries.
+     * 
+     * @param aggregates
+     *            A {@link Map} containing the aggregate data to be summarized.
+     * @return A {@link List} of {@link AggregateSummary} objects representing
+     *         the entirety of aggregate data, summarized by name.
+     * @see #getAggregates()
+     */
+    private List<AggregateSummary> aggregate(Map<File, List<Aggregate>> aggregates) {
+        if (aggregates.isEmpty())
+            return Collections.emptyList();
+    
+        final Map<String, AggregateSummary> summaries = new HashMap<String, AggregateSummary>();
+        for (List<Aggregate> aggregateList : aggregates.values())
+            for (Aggregate aggregate : aggregateList) {
+                final String name = aggregate.getName();
+                if (!summaries.containsKey(name))
+                    summaries.put(name, new AggregateSummary(name));
+    
+                final AggregateSummary summary = summaries.get(name);
+                summary.add(aggregate);
             }
+    
+        final List<AggregateSummary> summaryList = new ArrayList<AggregateSummary>(summaries.size());
+        for (AggregateSummary summary : summaries.values())
+            summaryList.add(summary);
+    
+        return summaryList;
+    }
 
-            sink.sectionTitle2();
-            sink.text("Summary");
-            sink.sectionTitle2_();
-
-            sink.text("This is a summary, by measurement name, of the measurements taken.");
-
-            print(sink, summaries);
-
-            sink.sectionTitle2();
-            sink.text("File Breakdown");
-            sink.sectionTitle2_();
-
-            sink.text("This is a list of, per XML file, the measurements taken.");
-
-            for (Entry<File, List<Aggregate>> entry : aggregates.entrySet()) {
-                sink.sectionTitle3();
-                sink.text(entry.getKey().getName());
-                sink.sectionTitle3_();
-
-                print(sink, entry.getValue());
+    /**
+     * Get aggregates.
+     * 
+     * @return A {@link Map}. Its keys are the files that contain aggregate
+     *         data; the values are {@link List}s of {@link Aggregate} objects
+     *         representing the timings read within each file.
+     *         <p />
+     *         If a file contains no timing data, it will not be returned in
+     *         this map.
+     * @throws MavenReportException
+     *             If any errors occur while reading the file.
+     */
+    private Map<File, List<Aggregate>> getAggregates() throws MavenReportException {
+        final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
+        for (File file : getTimingFiles()) {
+            final List<Aggregate> aggregateList = new LinkedList<Aggregate>();
+            FileReader reader;
+            try {
+                reader = new FileReader(file);
+            } catch (FileNotFoundException e) {
+                throw new MavenReportException("File not found: " + file, e);
             }
-        } finally {
-            sink.body_();
-
-            sink.flush();
-            sink.close();
+            try {
+                final Collection<Aggregate> unbound = binder.unbind(reader);
+                if (unbound.isEmpty())
+                    continue;
+                aggregateList.addAll(unbound);
+            } finally {
+                IOUtils.closeQuietly(reader);
+            }
+            aggregates.put(file, aggregateList);
         }
+        return aggregates;
+    }
+
+    /**
+     * Get the timings directories.
+     * 
+     * @return An array of {@link File} objects representing the configured timing directories; if none are configured, then "${project.build.directory}/jetm" will be used as a default.
+     */
+    private File[] getTimingDirectories() {
+        return timings == null ? new File[] { new File(buildDirectory, "jetm") } : timings;
+    }
+
+    /**
+     * Get all files available for reading as timings.
+     * 
+     * @return A {@link List} of {@link File} objects representing the files to be read as timing data.
+     */
+    private List<File> getTimingFiles() {
+        final List<File> timingFiles = new ArrayList<File>();
+        for (File timingDirectory : getTimingDirectories()) {
+            if (!timingDirectory.exists())
+                continue;
+
+            timingFiles.addAll(FileUtils.listFiles(timingDirectory, xmlFileFilter, TrueFileFilter.TRUE));
+        }
+
+        return timingFiles;
     }
 
     /**
@@ -242,85 +341,5 @@ public class TimingReportMojo extends AbstractMavenReport {
         sink.tableCell();
         sink.text(text);
         sink.tableCell_();
-    }
-
-    /**
-     * Get aggregates.
-     * 
-     * @return A {@link Map}. Its keys are the files that contain aggregate
-     *         data; the values are {@link List}s of {@link Aggregate} objects
-     *         representing the timings read within each file.
-     *         <p />
-     *         If a file contains no timing data, it will not be returned in
-     *         this map.
-     * @throws MavenReportException
-     *             If any errors occur while reading the file.
-     */
-    private Map<File, List<Aggregate>> getAggregates() throws MavenReportException {
-        final Map<File, List<Aggregate>> aggregates = new LinkedHashMap<File, List<Aggregate>>();
-        for (File directory : getTimings()) {
-            if (!directory.exists())
-                continue;
-
-            for (File file : FileUtils.listFiles(directory, xmlFileFilter, TrueFileFilter.TRUE)) {
-                final List<Aggregate> aggregateList = new LinkedList<Aggregate>();
-                FileReader reader;
-                try {
-                    reader = new FileReader(file);
-                } catch (FileNotFoundException e) {
-                    throw new MavenReportException("File not found: " + file, e);
-                }
-                try {
-                    final Collection<Aggregate> unbound = binder.unbind(reader);
-                    if (unbound.isEmpty())
-                        continue;
-                    aggregateList.addAll(unbound);
-                } finally {
-                    IOUtils.closeQuietly(reader);
-                }
-                aggregates.put(file, aggregateList);
-            }
-        }
-        return aggregates;
-    }
-
-    /**
-     * Get the timings directories.
-     * 
-     * @return An array of {@link File} objects representing the configured timing directories; if none are configured, then "${project.build.directory}/jetm" will be used as a default.
-     */
-    private File[] getTimings() {
-        return timings == null ? new File[] { new File(buildDirectory, "jetm") } : timings;
-    }
-
-    /**
-     * Create aggregate summaries.
-     * 
-     * @param aggregates
-     *            A {@link Map} containing the aggregate data to be summarized.
-     * @return A {@link List} of {@link AggregateSummary} objects representing
-     *         the entirety of aggregate data, summarized by name.
-     * @see #getAggregates()
-     */
-    private List<AggregateSummary> aggregate(Map<File, List<Aggregate>> aggregates) {
-        if (aggregates.isEmpty())
-            return Collections.emptyList();
-
-        final Map<String, AggregateSummary> summaries = new HashMap<String, AggregateSummary>();
-        for (List<Aggregate> aggregateList : aggregates.values())
-            for (Aggregate aggregate : aggregateList) {
-                final String name = aggregate.getName();
-                if (!summaries.containsKey(name))
-                    summaries.put(name, new AggregateSummary(name));
-
-                final AggregateSummary summary = summaries.get(name);
-                summary.add(aggregate);
-            }
-
-        final List<AggregateSummary> summaryList = new ArrayList<AggregateSummary>(summaries.size());
-        for (AggregateSummary summary : summaries.values())
-            summaryList.add(summary);
-
-        return summaryList;
     }
 }
